@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	_ "modernc.org/sqlite" // sqlite driver
@@ -109,6 +110,33 @@ func (repo *repo) Update(ctx context.Context, job *web.Job) error {
 	const q = `UPDATE jobs SET name = ?, status = ?, data = ?, updated_at = ? WHERE id = ?`
 
 	_, err = repo.db.ExecContext(ctx, q, item.Name, item.Status, item.Data, item.UpdatedAt, item.ID)
+
+	return err
+}
+
+func (repo *repo) UpdateResumeIndex(ctx context.Context, id string, resumeIndex int) error {
+	const q = `SELECT data FROM jobs WHERE id = ?`
+
+	var data string
+	if err := repo.db.QueryRowContext(ctx, q, id).Scan(&data); err != nil {
+		return err
+	}
+
+	var jobData web.JobData
+	if err := json.Unmarshal([]byte(data), &jobData); err != nil {
+		return fmt.Errorf("decode job data: %w", err)
+	}
+
+	jobData.ResumeIndex = resumeIndex
+
+	updatedData, err := json.Marshal(jobData)
+	if err != nil {
+		return err
+	}
+
+	const uq = `UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?`
+
+	_, err = repo.db.ExecContext(ctx, uq, string(updatedData), time.Now().UTC().Unix(), id)
 
 	return err
 }

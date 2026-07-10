@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gosom/google-maps-scraper/deduper"
@@ -19,7 +20,6 @@ import (
 	"github.com/gosom/google-maps-scraper/web"
 	"github.com/gosom/google-maps-scraper/web/sqlite"
 	"github.com/gosom/scrapemate"
-	"github.com/gosom/scrapemate/adapters/writers/csvwriter"
 	"github.com/gosom/scrapemate/scrapemateapp"
 	"golang.org/x/sync/errgroup"
 )
@@ -151,6 +151,16 @@ func (w *webrunner) scrapeJob(ctx context.Context, job *web.Job) error {
 		return w.svc.Update(ctx, job)
 	}
 
+	resumeIndex := job.Data.ResumeIndex
+	if resumeIndex < 0 {
+		resumeIndex = 0
+	}
+	if resumeIndex > len(job.Data.Keywords) {
+		resumeIndex = len(job.Data.Keywords)
+	}
+
+	keywords := job.Data.Keywords[resumeIndex:]
+
 	csvName := web.CSVFileName(job.Name)
 	outpath := filepath.Join(w.cfg.DataFolder, csvName)
 
@@ -204,12 +214,17 @@ func (w *webrunner) scrapeJob(ctx context.Context, job *web.Job) error {
 	if job.Data.Lat != "" && job.Data.Lon != "" {
 		coords = job.Data.Lat + "," + job.Data.Lon
 	}
-	exitMonitor := exiter.New()
+	baseExitMonitor := exiter.New()
+	exitMonitor := &resumeTrackingExiter{
+		base: baseExitMonitor,
+		svc:  w.svc,
+		job:  job,
+	}
 
 	seedJobs, err := runner.CreateSeedJobs(
 		job.Data.FastMode,
 		job.Data.Lang,
-		strings.NewReader(strings.Join(job.Data.Keywords, "\n")),
+		strings.NewReader(strings.Join(keywords, "\n")),
 		job.Data.Depth,
 		job.Data.Email,
 		coords,
@@ -276,6 +291,52 @@ func (w *webrunner) scrapeJob(ctx context.Context, job *web.Job) error {
 	return w.svc.Update(ctx, job)
 }
 
+type resumeTrackingExiter struct {
+	base exiter.Exiter
+	svc  *web.Service
+	job  *web.Job
+	mu   sync.Mutex
+}
+
+func (r *resumeTrackingExiter) SetSeedCount(val int) {
+	r.base.SetSeedCount(val)
+}
+
+func (r *resumeTrackingExiter) SetCancelFunc(fn context.CancelFunc) {
+	r.base.SetCancelFunc(fn)
+}
+
+func (r *resumeTrackingExiter) IncrSeedCompleted(val int) {
+	r.base.IncrSeedCompleted(val)
+	if val <= 0 {
+		return
+	}
+
+	r.mu.Lock()
+	r.job.Data.ResumeIndex += val
+	jobCopy := *r.job
+	r.mu.Unlock()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := r.svc.UpdateResumeIndex(ctx, jobCopy.ID, jobCopy.Data.ResumeIndex); err != nil {
+		log.Printf("failed to persist resume progress for job %s: %v", r.job.ID, err)
+	}
+}
+
+func (r *resumeTrackingExiter) IncrPlacesFound(val int) {
+	r.base.IncrPlacesFound(val)
+}
+
+func (r *resumeTrackingExiter) IncrPlacesCompleted(val int) {
+	r.base.IncrPlacesCompleted(val)
+}
+
+func (r *resumeTrackingExiter) Run(ctx context.Context) {
+	r.base.Run(ctx)
+}
+
 func defaultSetupMate(cfg *runner.Config) func(context.Context, io.Writer, *web.Job) (mateRunner, error) {
 	return func(_ context.Context, writer io.Writer, job *web.Job) (mateRunner, error) {
 		opts := []func(*scrapemateapp.Config) error{
@@ -316,7 +377,7 @@ func defaultSetupMate(cfg *runner.Config) func(context.Context, io.Writer, *web.
 
 		log.Printf("job %s has proxy: %v", job.ID, hasProxy)
 
-		csvWriter := csvwriter.NewCsvWriter(csv.NewWriter(writer))
+		csvWriter := web.NewFilteredCsvWriter(csv.NewWriter(writer), job.Data.ResultFieldSelection())
 
 		writers := []scrapemate.ResultWriter{csvWriter}
 

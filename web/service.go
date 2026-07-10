@@ -69,6 +69,10 @@ func (s *Service) Update(ctx context.Context, job *Job) error {
 	return s.repo.Update(ctx, job)
 }
 
+func (s *Service) UpdateResumeIndex(ctx context.Context, id string, resumeIndex int) error {
+	return s.repo.UpdateResumeIndex(ctx, id, resumeIndex)
+}
+
 func (s *Service) SelectPending(ctx context.Context) ([]Job, error) {
 	return s.repo.Select(ctx, SelectParams{Status: StatusPending, Limit: 1})
 }

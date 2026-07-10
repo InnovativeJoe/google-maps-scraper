@@ -18,8 +18,6 @@
     --color-error: #ef4444;
     --color-error-bg: rgba(239, 68, 68, 0.15);
     --color-github: #1f2937;
-    --color-sponsor: #ec4899;
-    --color-sponsor-hover: #db2777;
     --accent-color: #8b5cf6;
 }
 
@@ -118,7 +116,7 @@ nav a:hover {
     box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
 }
 
-.github-button, .sponsor-button {
+.github-button {
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -142,51 +140,6 @@ nav a:hover {
     transform: translateY(-1px);
 }
 
-.sponsor-button {
-    background-color: var(--color-sponsor);
-}
-
-.sponsor-button:hover {
-    background-color: var(--color-sponsor-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
-}
-
-/* Floating Banner */
-.sponsor-banner-card {
-    background: linear-gradient(135deg, rgba(236, 72, 153, 0.07) 0%, rgba(139, 92, 246, 0.07) 100%);
-    border: 1px solid rgba(236, 72, 153, 0.2);
-    border-radius: 12px;
-    padding: 16px 20px;
-    margin: 20px 40px 0 40px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: relative;
-    backdrop-filter: blur(8px);
-}
-
-.sponsor-banner-card .sponsor-text {
-    font-size: 14px;
-    color: #e5e7eb;
-    margin-right: 24px;
-}
-
-.sponsor-banner-card .sponsor-close {
-    background: transparent;
-    border: none;
-    color: var(--color-text-muted);
-    font-size: 20px;
-    cursor: pointer;
-    padding: 4px;
-    line-height: 1;
-    transition: color 0.2s;
-}
-
-.sponsor-banner-card .sponsor-close:hover {
-    color: white;
-}
-
 /* Main Grid Layout */
 main {
     flex: 1;
@@ -198,7 +151,7 @@ main {
 
 /* Left Sidebar Controls */
 .sidebar {
-    background: rgba(17, 24, 39, 0.35);
+    background: linear-gradient(180deg, rgba(17, 24, 39, 0.42) 0%, rgba(17, 24, 39, 0.28) 100%);
     border-right: 1px solid var(--color-border);
     padding: 24px;
     overflow-y: auto;
@@ -274,6 +227,36 @@ legend {
     cursor: pointer;
     font-size: 14px;
     color: var(--color-text);
+}
+
+.field-toggle-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+    margin-top: 8px;
+}
+
+.field-toggle-item {
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: rgba(17, 24, 39, 0.28);
+}
+
+.field-toggle-item span {
+    line-height: 1.3;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.form-actions button[type="submit"] {
+    margin-top: 0;
 }
 
 label {
@@ -381,6 +364,19 @@ button[type="submit"] {
     margin-top: 8px;
 }
 
+button[type="submit"].secondary-button {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    box-shadow: none;
+}
+
+button[type="submit"].secondary-button:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(139, 92, 246, 0.35);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+}
+
 button[type="submit"]:hover {
     transform: translateY(-1px);
     box-shadow: 0 6px 16px rgba(139, 92, 246, 0.35);
@@ -393,7 +389,7 @@ button[type="submit"]:active {
 
 /* Right Content Area */
 .content {
-    background: rgba(15, 23, 42, 0.15);
+    background: rgba(15, 23, 42, 0.12);
     padding: 32px 40px;
     overflow-y: auto;
     display: flex;
@@ -427,7 +423,7 @@ button[type="submit"]:active {
 
 /* Table Design */
 .table-wrapper {
-    background: var(--color-surface);
+    background: linear-gradient(180deg, rgba(17, 24, 39, 0.58) 0%, rgba(15, 23, 42, 0.42) 100%);
     border: 1px solid var(--color-border);
     border-radius: 12px;
     overflow: hidden;
@@ -613,11 +609,8 @@ tr:last-child td {
         justify-content: space-between;
     }
     
-    .sponsor-banner-card {
-        margin: 16px 20px 0 20px;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
+    .field-toggle-grid {
+        grid-template-columns: 1fr;
     }
     
     th, td {

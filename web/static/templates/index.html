@@ -36,22 +36,8 @@
                     </svg>
                     Star
                 </a>
-                <a href="https://github.com/sponsors/gosom" target="_blank" rel="noopener noreferrer" class="sponsor-button">
-                    <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
-                    </svg>
-                    Sponsor
-                </a>
             </div>
         </header>
-
-        <div id="sponsor-section" class="sponsor-banner-card">
-            <span class="sponsor-text">💖 Support the ongoing maintenance and development of this project by becoming a sponsor! Your contribution keeps this tool active and updated.</span>
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <a href="https://github.com/sponsors/gosom" class="sponsor-button" target="_blank" rel="noopener noreferrer" style="padding: 6px 12px; font-size: 13px;">Sponsor Now</a>
-                <button class="sponsor-close" onclick="hideSponsor()">×</button>
-            </div>
-        </div>
 
         <main>
             <div class="sidebar">
@@ -82,10 +68,6 @@
                         <div class="form-group">
                             <label for="keywords">Keywords (one per line)</label>
                             <textarea id="keywords" name="keywords" rows="6" placeholder="e.g. coffee shop London&#10;cafe Soho London">{{ .KeywordsString }}</textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="lang">Language Code</label>
-                            <input type="text" id="lang" name="lang" value="{{.Language}}">
                         </div>
                     </fieldset>
                     
@@ -148,6 +130,143 @@
                             </div>
                         </fieldset>
                     </details>
+
+                    <details class="expandable-section" open>
+                        <summary>
+                            <span style="display: flex; align-items: center; gap: 8px;">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <path d="M8 7h8"></path>
+                                    <path d="M8 12h8"></path>
+                                    <path d="M8 17h5"></path>
+                                </svg>
+                                Result Fields
+                            </span>
+                        </summary>
+                        <fieldset>
+                            <p class="text-muted">
+                                Unchecked fields will be omitted from the exported CSV for this job.
+                            </p>
+                            <div class="field-toggle-grid">
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="link" name="link" {{if .Link}}checked{{end}}>
+                                    <span>Link</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="title" name="title" {{if .Title}}checked{{end}}>
+                                    <span>Title</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="category" name="category" {{if .Category}}checked{{end}}>
+                                    <span>Category</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="address" name="address" {{if .Address}}checked{{end}}>
+                                    <span>Address</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="open_hours" name="open_hours" {{if .OpenHours}}checked{{end}}>
+                                    <span>Open hours</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="website" name="website" {{if .Website}}checked{{end}}>
+                                    <span>Website</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="phone" name="phone" {{if .Phone}}checked{{end}}>
+                                    <span>Phone</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="plus_code" name="plus_code" {{if .PlusCode}}checked{{end}}>
+                                    <span>Plus code</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="review_count" name="review_count" {{if .ReviewCount}}checked{{end}}>
+                                    <span>Review count</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="review_rating" name="review_rating" {{if .ReviewRating}}checked{{end}}>
+                                    <span>Review rating</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="reviews_per_rating" name="reviews_per_rating" {{if .ReviewsPerRating}}checked{{end}}>
+                                    <span>Reviews per rating</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="include_latitude" name="include_latitude" {{if .Latitude}}checked{{end}}>
+                                    <span>Latitude</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="include_longitude" name="include_longitude" {{if .Longitude}}checked{{end}}>
+                                    <span>Longitude</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="input_id" name="input_id" {{if .InputID}}checked{{end}}>
+                                    <span>Input ID</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="popular_times" name="popular_times" {{if .PopularTimes}}checked{{end}}>
+                                    <span>Popular times</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="cid" name="cid" {{if .Cid}}checked{{end}}>
+                                    <span>CID</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="status" name="status" {{if .Status}}checked{{end}}>
+                                    <span>Status</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="descriptions" name="descriptions" {{if .Descriptions}}checked{{end}}>
+                                    <span>Descriptions</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="reviews_link" name="reviews_link" {{if .ReviewsLink}}checked{{end}}>
+                                    <span>Reviews link</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="thumbnail" name="thumbnail" {{if .Thumbnail}}checked{{end}}>
+                                    <span>Thumbnail</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="data_id" name="data_id" {{if .DataID}}checked{{end}}>
+                                    <span>Data ID</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="street_view_url" name="street_view_url" {{if .StreetViewURL}}checked{{end}}>
+                                    <span>Street view URL</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="place_id" name="place_id" {{if .PlaceID}}checked{{end}}>
+                                    <span>Place ID</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="images" name="images" {{if .Images}}checked{{end}}>
+                                    <span>Images</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="reservations" name="reservations" {{if .Reservations}}checked{{end}}>
+                                    <span>Reservations</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="order_online" name="order_online" {{if .OrderOnline}}checked{{end}}>
+                                    <span>Order online</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="menu" name="menu" {{if .Menu}}checked{{end}}>
+                                    <span>Menu</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="owner" name="owner" {{if .Owner}}checked{{end}}>
+                                    <span>Owner</span>
+                                </label>
+                                <label class="form-group checkbox field-toggle-item">
+                                    <input type="checkbox" id="complete_address" name="complete_address" {{if .CompleteAddress}}checked{{end}}>
+                                    <span>Complete address</span>
+                                </label>
+                            </div>
+                        </fieldset>
+                    </details>
                     
                     <details class="expandable-section">
                         <summary>
@@ -172,13 +291,22 @@
                         </fieldset>
                     </details>
                     
-                    <button type="submit">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                        Start Scraping
-                    </button>
+                    <div class="form-actions">
+                        <button type="submit" name="action" value="start" class="primary-button">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                            Start Scraping
+                        </button>
+                        <button type="submit" name="action" value="resume" class="secondary-button">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 5v14"></path>
+                                <path d="M5 12h14"></path>
+                            </svg>
+                            Resume Scraping
+                        </button>
+                    </div>
                 </form>
             </div>
             
@@ -204,13 +332,5 @@
         </main>
     </div>
 
-<script>
-function hideSponsor() {
-    const sponsorSection = document.getElementById('sponsor-section');
-    if (sponsorSection) {
-        sponsorSection.style.display = 'none';
-    }
-}
-</script>
 </body>
 </html>

@@ -168,7 +168,6 @@ type formData struct {
 	Name     string
 	MaxTime  string
 	Keywords []string
-	Language string
 	Zoom     int
 	FastMode bool
 	Radius   int
@@ -177,6 +176,7 @@ type formData struct {
 	Depth    int
 	Email    bool
 	Proxies  []string
+	FieldSelection
 }
 
 type ctxKey string
@@ -228,17 +228,17 @@ func (s *Server) index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := formData{
-		Name:     "",
-		MaxTime:  "10m",
-		Keywords: []string{},
-		Language: "en",
-		Zoom:     15,
-		FastMode: false,
-		Radius:   10000,
-		Lat:      "0",
-		Lon:      "0",
-		Depth:    50,
-		Email:    false,
+		Name:           "",
+		MaxTime:        "10m",
+		Keywords:       []string{},
+		Zoom:           15,
+		FastMode:       false,
+		Radius:         10000,
+		Lat:            "0",
+		Lon:            "0",
+		Depth:          50,
+		Email:          false,
+		FieldSelection: DefaultFieldSelection(),
 	}
 
 	_ = tmpl.Execute(w, data)
@@ -300,7 +300,7 @@ func (s *Server) scrape(w http.ResponseWriter, r *http.Request) {
 		newJob.Data.Keywords = append(newJob.Data.Keywords, k)
 	}
 
-	newJob.Data.Lang = r.Form.Get("lang")
+	newJob.Data.Lang = "en"
 
 	newJob.Data.Zoom, err = strconv.Atoi(r.Form.Get("zoom"))
 	if err != nil {
@@ -331,6 +331,36 @@ func (s *Server) scrape(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newJob.Data.Email = r.Form.Get("email") == "on"
+	newJob.Data.ResumeIndex = 0
+	newJob.Data.Link = r.Form.Get("link") == "on"
+	newJob.Data.Title = r.Form.Get("title") == "on"
+	newJob.Data.Category = r.Form.Get("category") == "on"
+	newJob.Data.Address = r.Form.Get("address") == "on"
+	newJob.Data.OpenHours = r.Form.Get("open_hours") == "on"
+	newJob.Data.Website = r.Form.Get("website") == "on"
+	newJob.Data.Phone = r.Form.Get("phone") == "on"
+	newJob.Data.PlusCode = r.Form.Get("plus_code") == "on"
+	newJob.Data.ReviewCount = r.Form.Get("review_count") == "on"
+	newJob.Data.ReviewRating = r.Form.Get("review_rating") == "on"
+	newJob.Data.ReviewsPerRating = r.Form.Get("reviews_per_rating") == "on"
+	newJob.Data.Latitude = r.Form.Get("include_latitude") == "on"
+	newJob.Data.Longitude = r.Form.Get("include_longitude") == "on"
+	newJob.Data.InputID = r.Form.Get("input_id") == "on"
+	newJob.Data.PopularTimes = r.Form.Get("popular_times") == "on"
+	newJob.Data.Cid = r.Form.Get("cid") == "on"
+	newJob.Data.Status = r.Form.Get("status") == "on"
+	newJob.Data.Descriptions = r.Form.Get("descriptions") == "on"
+	newJob.Data.ReviewsLink = r.Form.Get("reviews_link") == "on"
+	newJob.Data.Thumbnail = r.Form.Get("thumbnail") == "on"
+	newJob.Data.DataID = r.Form.Get("data_id") == "on"
+	newJob.Data.StreetViewURL = r.Form.Get("street_view_url") == "on"
+	newJob.Data.PlaceID = r.Form.Get("place_id") == "on"
+	newJob.Data.Images = r.Form.Get("images") == "on"
+	newJob.Data.Reservations = r.Form.Get("reservations") == "on"
+	newJob.Data.OrderOnline = r.Form.Get("order_online") == "on"
+	newJob.Data.Menu = r.Form.Get("menu") == "on"
+	newJob.Data.Owner = r.Form.Get("owner") == "on"
+	newJob.Data.CompleteAddress = r.Form.Get("complete_address") == "on"
 
 	proxies := strings.Split(r.Form.Get("proxies"), "\n")
 	if len(proxies) > 0 {
@@ -341,6 +371,14 @@ func (s *Server) scrape(w http.ResponseWriter, r *http.Request) {
 			}
 
 			newJob.Data.Proxies = append(newJob.Data.Proxies, p)
+		}
+	}
+
+	if strings.EqualFold(r.Form.Get("action"), "resume") {
+		if previous, ok, err := s.latestJobByName(r.Context(), newJob.Name); err == nil && ok {
+			if sameKeywordSet(previous.Data.Keywords, newJob.Data.Keywords) {
+				newJob.Data.ResumeIndex = previous.Data.ResumeIndex
+			}
 		}
 	}
 
@@ -366,6 +404,35 @@ func (s *Server) scrape(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = tmpl.Execute(w, newJob)
+}
+
+func (s *Server) latestJobByName(ctx context.Context, name string) (Job, bool, error) {
+	jobs, err := s.svc.All(ctx)
+	if err != nil {
+		return Job{}, false, err
+	}
+
+	for _, job := range jobs {
+		if job.Name == name {
+			return job, true, nil
+		}
+	}
+
+	return Job{}, false, nil
+}
+
+func sameKeywordSet(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (s *Server) getJobs(w http.ResponseWriter, r *http.Request) {

@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 )
@@ -26,6 +27,7 @@ type JobRepository interface {
 	Delete(context.Context, string) error
 	Select(context.Context, SelectParams) ([]Job, error)
 	Update(context.Context, *Job) error
+	UpdateResumeIndex(context.Context, string, int) error
 }
 
 type Job struct {
@@ -73,6 +75,8 @@ type JobData struct {
 	ExtraReviews bool          `json:"extra_reviews"`
 	MaxTime      time.Duration `json:"max_time"`
 	Proxies      []string      `json:"proxies"`
+	ResumeIndex  int           `json:"resume_index"`
+	FieldSelection
 }
 
 func (d *JobData) Validate() error {
@@ -99,6 +103,25 @@ func (d *JobData) Validate() error {
 	if d.FastMode && (d.Lat == "" || d.Lon == "") {
 		return errors.New("missing geo coordinates")
 	}
+
+	return nil
+}
+
+// UnmarshalJSON applies sensible defaults for field-selection options while
+// preserving explicitly stored values for all other fields.
+func (d *JobData) UnmarshalJSON(data []byte) error {
+	type alias JobData
+
+	tmp := alias{
+		Lang:           "en",
+		FieldSelection: DefaultFieldSelection(),
+	}
+
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+
+	*d = JobData(tmp)
 
 	return nil
 }

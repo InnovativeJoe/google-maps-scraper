@@ -118,3 +118,15 @@ func (r *memoryJobRepo) Update(_ context.Context, job *web.Job) error {
 	r.jobs[job.ID] = *job
 	return nil
 }
+
+func (r *memoryJobRepo) UpdateResumeIndex(_ context.Context, id string, resumeIndex int) error {
+	job, ok := r.jobs[id]
+	if !ok {
+		return nil
+	}
+
+	job.Data.ResumeIndex = resumeIndex
+	r.jobs[id] = job
+
+	return nil
+}
