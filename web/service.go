@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 type Service struct {
@@ -33,18 +32,34 @@ func (s *Service) Get(ctx context.Context, id string) (Job, error) {
 }
 
 func (s *Service) Delete(ctx context.Context, id string) error {
-	if strings.Contains(id, "/") || strings.Contains(id, "\\") || strings.Contains(id, "..") {
-		return fmt.Errorf("invalid file name")
+	job, err := s.repo.Get(ctx, id)
+	if err != nil {
+		return s.repo.Delete(ctx, id)
 	}
 
-	datapath := filepath.Join(s.dataFolder, id+".csv")
+	csvName := CSVFileName(job.Name)
+	datapath := filepath.Join(s.dataFolder, csvName)
 
-	if _, err := os.Stat(datapath); err == nil {
-		if err := os.Remove(datapath); err != nil {
-			return err
+	// Only delete the CSV file if no other jobs share this same sanitized name
+	allJobs, err := s.repo.Select(ctx, SelectParams{})
+	if err == nil {
+		hasDuplicates := false
+		for _, j := range allJobs {
+			if j.ID != id && CSVFileName(j.Name) == csvName {
+				hasDuplicates = true
+				break
+			}
 		}
-	} else if !os.IsNotExist(err) {
-		return err
+		if !hasDuplicates {
+			if _, err := os.Stat(datapath); err == nil {
+				_ = os.Remove(datapath)
+			}
+		}
+	} else {
+		// Fallback to simple removal if select fails
+		if _, err := os.Stat(datapath); err == nil {
+			_ = os.Remove(datapath)
+		}
 	}
 
 	return s.repo.Delete(ctx, id)
@@ -58,15 +73,17 @@ func (s *Service) SelectPending(ctx context.Context) ([]Job, error) {
 	return s.repo.Select(ctx, SelectParams{Status: StatusPending, Limit: 1})
 }
 
-func (s *Service) GetCSV(_ context.Context, id string) (string, error) {
-	if strings.Contains(id, "/") || strings.Contains(id, "\\") || strings.Contains(id, "..") {
-		return "", fmt.Errorf("invalid file name")
+func (s *Service) GetCSV(ctx context.Context, id string) (string, error) {
+	job, err := s.repo.Get(ctx, id)
+	if err != nil {
+		return "", err
 	}
 
-	datapath := filepath.Join(s.dataFolder, id+".csv")
+	csvName := CSVFileName(job.Name)
+	datapath := filepath.Join(s.dataFolder, csvName)
 
 	if _, err := os.Stat(datapath); os.IsNotExist(err) {
-		return "", fmt.Errorf("csv file not found for job %s", id)
+		return "", fmt.Errorf("csv file not found for job %s (name: %s)", id, job.Name)
 	}
 
 	return datapath, nil

@@ -151,9 +151,23 @@ func (w *webrunner) scrapeJob(ctx context.Context, job *web.Job) error {
 		return w.svc.Update(ctx, job)
 	}
 
-	outpath := filepath.Join(w.cfg.DataFolder, job.ID+".csv")
+	csvName := web.CSVFileName(job.Name)
+	outpath := filepath.Join(w.cfg.DataFolder, csvName)
 
-	outfile, err := os.Create(outpath)
+	fileInfo, statErr := os.Stat(outpath)
+	appendMode := statErr == nil && fileInfo.Size() > 0
+
+	dedup, err := web.LoadCSVDeduper(ctx, outpath)
+	if err != nil {
+		dedup = deduper.New()
+	}
+
+	var outfile *os.File
+	if appendMode {
+		outfile, err = os.OpenFile(outpath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	} else {
+		outfile, err = os.Create(outpath)
+	}
 	if err != nil {
 		return err
 	}
@@ -162,12 +176,17 @@ func (w *webrunner) scrapeJob(ctx context.Context, job *web.Job) error {
 		_ = outfile.Close()
 	}()
 
+	var writer io.Writer = outfile
+	if appendMode {
+		writer = &headerSkipperWriter{w: outfile}
+	}
+
 	setupMate := w.setupMate
 	if setupMate == nil {
 		setupMate = defaultSetupMate(w.cfg)
 	}
 
-	mate, err := setupMate(ctx, outfile, job)
+	mate, err := setupMate(ctx, writer, job)
 	if err != nil {
 		job.Status = web.StatusFailed
 
@@ -185,8 +204,6 @@ func (w *webrunner) scrapeJob(ctx context.Context, job *web.Job) error {
 	if job.Data.Lat != "" && job.Data.Lon != "" {
 		coords = job.Data.Lat + "," + job.Data.Lon
 	}
-
-	dedup := deduper.New()
 	exitMonitor := exiter.New()
 
 	seedJobs, err := runner.CreateSeedJobs(
@@ -313,4 +330,30 @@ func defaultSetupMate(cfg *runner.Config) func(context.Context, io.Writer, *web.
 
 		return scrapemateapp.NewScrapeMateApp(matecfg)
 	}
+}
+
+type headerSkipperWriter struct {
+	w             io.Writer
+	skippedHeader bool
+	buf           []byte
+}
+
+func (h *headerSkipperWriter) Write(p []byte) (int, error) {
+	if h.skippedHeader {
+		return h.w.Write(p)
+	}
+	h.buf = append(h.buf, p...)
+	for i, b := range h.buf {
+		if b == '\n' {
+			h.skippedHeader = true
+			remaining := h.buf[i+1:]
+			h.buf = nil
+			var err error
+			if len(remaining) > 0 {
+				_, err = h.w.Write(remaining)
+			}
+			return len(p), err
+		}
+	}
+	return len(p), nil
 }

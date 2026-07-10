@@ -143,6 +143,13 @@ func (j *GmapJob) Process(ctx context.Context, resp *scrapemate.Response) (any, 
 	var next []scrapemate.IJob
 
 	if strings.Contains(resp.URL, "/maps/place/") {
+		if j.Deduper != nil && !j.Deduper.AddIfNotExists(ctx, resp.URL) {
+			if j.ExitMonitor != nil {
+				j.ExitMonitor.IncrSeedCompleted(1)
+			}
+			return nil, nil, nil
+		}
+
 		jopts := []PlaceJobOptions{}
 		if j.ExitMonitor != nil {
 			jopts = append(jopts, WithPlaceJobExitMonitor(j.ExitMonitor))

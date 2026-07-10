@@ -237,7 +237,7 @@ func (s *Server) index(w http.ResponseWriter, r *http.Request) {
 		Radius:   10000,
 		Lat:      "0",
 		Lon:      "0",
-		Depth:    10,
+		Depth:    50,
 		Email:    false,
 	}
 
